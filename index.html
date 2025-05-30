@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Flashcards + Word Table</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      background-color: #f4f4f9;
+    }
+
+    h1 {
+      margin-top: 60px;
+    }
+
+    .box {
+      width: 300px;
+      min-height: 60px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      margin: 10px 0;
+      padding: 15px;
+      font-size: 1.2em;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.3s ease;
+    }
+
+    .box:hover {
+      transform: scale(1.02);
+    }
+
+    #germanBox {
+      background: white;
+      cursor: pointer;
+    }
+
+    #translationBox {
+      background-color: #e0f7fa;
+      display: none;
+    }
+
+    #exampleBox {
+      background-color: #e0f7e9;
+      display: none;
+      font-size: 0.95em;
+    }
+
+    .top-left-btn {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 1000;
+      background-color: #007BFF;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 5px;
+      font-size: 0.9em;
+      cursor: pointer;
+    }
+
+    .top-left-btn:hover {
+      background-color: #0056b3;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 1em;
+      border: none;
+      border-radius: 5px;
+      background-color: #007BFF;
+      color: white;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    button:hover {
+      background-color: #007BFF;
+    }
+
+    #wordTableContainer {
+      width: 90%;
+      max-width: 900px;
+      margin-top: 30px;
+      display: none;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #eee;
+    }
+  </style>
+</head>
+<body>
+  <button id="toggleTableBtn" class="top-left-btn">Show All Words</button>
+
+  <h1>German - Portuguese Flashcards</h1>
+
+  <div class="box" id="germanBox">Click to reveal translation</div>
+  <div class="box" id="translationBox"></div>
+  <div class="box" id="exampleBox"></div>
+  <button onclick="nextCard()">Next</button>
+
+  <div id="wordTableContainer"></div>
+
+  <script>
+    const words = [
+      { german: "sauer", portuguese: "zangado ou azedo", example: "Ich bin heute sehr sauer auf dich." },
+      { german: "erleichtert", portuguese: "aliviado / relieved", example: "Nach der Prüfung war ich erleichtert." },
+      { german: "dankbar", portuguese: "agradecido / grato", example: "Ich bin dir sehr dankbar für deine Hilfe." },
+      { german: "erledigen", portuguese: "completar", example: "Ich muss noch einige Aufgaben erledigen." },
+      { german: "der/die Bürger/in", portuguese: "cidadão / citizen", example: "Jeder Bürger hat Rechte und Pflichten." },
+      { german: "dazu", portuguese: "para além disso", example: "Ich habe das Buch gelesen, und dazu den Film gesehen." },
+      { german: "die Bescheinigung", portuguese: "certificado", example: "Die Bescheinigung bestätigt Ihre Teilnahme." },
+      { german: "die Münze", portuguese: "a moeda", example: "Er warf eine Münze in den Brunnen." },
+      { german: "der Geldschein", portuguese: "a nota (dinheiro)", example: "Ich habe einen 50-Euro-Geldschein." },
+      { german: "sparen", portuguese: "poupar (dinheiro)", example: "Ich spare Geld für einen Urlaub." },
+      { german: "ausgeben", portuguese: "gastar (dinheiro)", example: "Sie gibt viel Geld für Kleidung aus." },
+      { german: "legen", portuguese: "colocar (Zürucklegen – colocar de lado)", example: "Bitte leg das Buch auf den Tisch." },
+      { german: "leisten", portuguese: "prestar / fazer / perform", example: "Er kann sich ein neues Auto leisten." },
+      { german: "sich leisten können", portuguese: "conseguir pagar / comprar", example: "Wir können uns den Urlaub leisten." },
+      { german: "geizig", portuguese: "agarrado (ao dinheiro)", example: "Er ist so geizig, dass er nie Trinkgeld gibt." },
+      { german: "wofür", portuguese: "para quê? / for what?", example: "Wofür brauchst du das Geld?" },
+      { german: "regelmäßig", portuguese: "regularmente", example: "Ich gehe regelmäßig ins Fitnessstudio." },
+      { german: "die Angabe", portuguese: "detalhe / informação", example: "Bitte überprüfen Sie Ihre Angaben." },
+      { german: "mündlich", portuguese: "verbalmente / oralmente", example: "Die Prüfung findet mündlich statt." },
+      { german: "mittlerweile", portuguese: "entretanto / meanwhile", example: "Mittlerweile hat sich vieles verändert." },
+      { german: "angestellt", portuguese: "empregado (assalariado)", example: "Sie ist als Lehrerin angestellt." },
+      { german: "wie deine Adresse lautet", portuguese: "qual é a tua morada?", example: "Erzähl mir, wie deine Adresse lautet." },
+      { german: "entmutigen", portuguese: "desanimar / desencorajar", example: "Lass dich nicht entmutigen." },
+      { german: "anbieten", portuguese: "oferecer / offer", example: "Ich kann dir meine Hilfe anbieten." },
+      { german: "die Geheimzahl", portuguese: "código secreto (password)", example: "Gib deine Geheimzahl nicht weiter." },
+      { german: "abheben", portuguese: "levantar (Geld abheben, Flugzeug abheben)", example: "Ich möchte Geld vom Konto abheben." },
+
+      { german: "das Gesetz", portuguese: "a lei", example: "Das Gesetz schützt die Rechte aller." },
+      { german: "die Ähnlichkeit", portuguese: "semelhança(s)", example: "Die Ähnlichkeit ist erstaunlich." },
+      { german: "die Zukunft", portuguese: "o futuro", example: "Ich hoffe auf eine bessere Zukunft." },
+      { german: "der Beitrag", portuguese: "a contribuição", example: "Sein Beitrag war sehr wichtig." },
+      { german: "mitteilen", portuguese: "informar / comunicar", example: "Bitte teilen Sie mir Ihre Entscheidung mit." },
+      { german: "das Fach", portuguese: "a disciplina (escolar)", example: "Mathematik ist mein Lieblingsfach." },
+      { german: "die Wissenschaft", portuguese: "a ciência", example: "Die Wissenschaft entwickelt sich schnell." },
+      { german: "vorgeben", portuguese: "especificar", example: "Du kannst nicht immer andere vorgaben." },
+      { german: "leiten", portuguese: "guiar / liderar", example: "Sie leitet das Team seit fünf Jahren." },
+      { german: "der Ausdruck", portuguese: "a expressão (die Ausdrücke – as expressões)", example: "Das ist ein gebräuchlicher Ausdruck." },
+      { german: "die Wahrnehmung", portuguese: "a perceção / awareness", example: "Die Wahrnehmung der Realität ist subjektiv." },
+      { german: "die Meinung", portuguese: "a opinião", example: "Jeder hat das Recht auf seine Meinung." },
+      { german: "anstrengend", portuguese: "cansativo / exaustivo", example: "Die Arbeit war heute sehr anstrengend." },
+      { german: "deshalb", portuguese: "portanto", example: "Ich bin müde, deshalb gehe ich schlafen." },
+      { german: "der Schritt", portuguese: "passo (etapa / próximo passo)", example: "Der nächste Schritt ist die Planung." },
+      { german: "nötig", portuguese: "necessário", example: "Das ist nicht nötig." },
+      { german: "die Lösung", portuguese: "solução / solution", example: "Wir müssen eine Lösung finden." },
+      { german: "der Begriff", portuguese: "termo / conceito", example: "Der Begriff ist schwer zu erklären." },
+      { german: "der Angriff", portuguese: "ataque", example: "Der Angriff kam unerwartet." },
+      { german: "die Gesellschaft", portuguese: "a sociedade / companhia", example: "Die Gesellschaft verändert sich." },
+      { german: "langfristig", portuguese: "long-term", example: "Langfristig planen wir den Ausbau." },
+      { german: "das Ziel", portuguese: "o objetivo", example: "Unser Ziel ist klar definiert." },
+      { german: "die Verfassung", portuguese: "a constituição", example: "Die Verfassung schützt die Bürgerrechte." },
+      { german: "heutzutage", portuguese: "hoje em dia / nowadays", example: "Heutzutage nutzen viele das Internet." },
+      { german: "das Entwerfen", portuguese: "design", example: "Er ist verantwortlich für das Entwerfen." },
+      { german: "häufig", portuguese: "frequentemente / frequently", example: "Das passiert häufig in der Praxis." },
+
+      { german: "zunächst", portuguese: "firstly / primeiramente", example: "Zunächst sollten wir das Problem analysieren." },
+      { german: "die Reihenfolge", portuguese: "sequence / sequência", example: "Die Reihenfolge der Aufgaben ist wichtig." },
+      { german: "vervollständigen", portuguese: "completar", example: "Bitte vervollständigen Sie das Formular." },
+      { german: "das Vergangen", portuguese: "coisas do passado", example: "Das ist längst vergangen." },
+      { german: "berichten", portuguese: "reportar / informar", example: "Der Journalist wird live berichten." },
+      { german: "der Künstler", portuguese: "artista", example: "Der Künstler stellt seine Werke aus." },
+      { german: "damals", portuguese: "back then / antigamente", example: "Damals war alles anders." },
+      { german: "groß geworden", portuguese: "grown up / cresceu (passado)", example: "Ich bin in Berlin groß geworden." },
+      { german: "erscheinen", portuguese: "release / aparecer", example: "Das Buch erscheint nächste Woche." },
+      { german: "dort", portuguese: "there / lá", example: "Ich wohne dort drüben." },
+      { german: "sterben", portuguese: "morrer, ist gestorben – morreu", example: "Sein Großvater ist letztes Jahr gestorben." },
+      { german: "der Untertitel", portuguese: "legenda / subtitles", example: "Der Film hat deutsche Untertitel." },
+      { german: "der Unterschied", portuguese: "diferença", example: "Der Unterschied ist kaum sichtbar." },
+      { german: "die Vergangenheit", portuguese: "o passado", example: "Man sollte die Vergangenheit akzeptieren." },
+      { german: "die Dauer", portuguese: "duração", example: "Die Dauer des Kurses beträgt sechs Monate." },
+      { german: "vorbei", portuguese: "acabou / do lado", example: "Der Sommer ist schon vorbei." },
+      { german: "immer noch", portuguese: "still / ainda", example: "Er ist immer noch krank." },
+      { german: "etwa", portuguese: "aproximadamente", example: "Die Fahrt dauert etwa zwei Stunden." },
+      { german: "etwas", portuguese: "something / algo", example: "Ich möchte dir etwas zeigen." },
+      { german: "der Krieg", portuguese: "a guerra", example: "Der Krieg hat viele Leben zerstört." },
+      { german: "die Fortgeschrittene", portuguese: "advanced (alunos)", example: "Sie ist eine Fortgeschrittene im Spanischkurs." },
+      { german: "erfolgreich", portuguese: "successful", example: "Das Projekt war sehr erfolgreich." },
+      { german: "Heimat", portuguese: "país natal", example: "Meine Heimat ist sehr schön." },
+      { german: "das Heimweh", portuguese: "nostalgia (saudades do país natal)", example: "Ich habe Heimweh, wenn ich weit weg bin." },
+      { german: "zwar", portuguese: "although / even though", example: "Es ist zwar kalt, aber sonnig." },
+      { german: "froh", portuguese: "happy", example: "Ich bin froh, dich zu sehen." },
+      { german: "worüber", portuguese: "sobre o quê? / about what?", example: "Worüber sprichst du?" },
+      { german: "seltsam", portuguese: "estranho / bizarro / weird", example: "Das Verhalten war seltsam." },
+
+  { "german": "die Beschreibung", "portuguese": "a descrição", "example": "Die Beschreibung des Produkts war sehr detailliert." },
+  { "german": "die Art", "portuguese": "forma / tipo (palavra de várias formas)", "example": "Welche Art von Musik hörst du gerne?" },
+  { "german": "die Lastschrift", "portuguese": "débito direto", "example": "Die monatliche Miete wird per Lastschrift abgebucht." },
+  { "german": "der Dauerauftrag", "portuguese": "transferência bancária recorrente", "example": "Ich habe einen Dauerauftrag für meine Stromrechnung eingerichtet." },
+  { "german": "einzahlen", "portuguese": "depositar algo / depositar (dinheiro)", "example": "Ich muss noch Geld auf mein Konto einzahlen." },
+  { "german": "die Tätigkeit", "portuguese": "a atividade", "example": "Meine Haupttätigkeit ist das Schreiben." },
+  { "german": "die Heizkörper", "portuguese": "o aquecedor / radiador", "example": "Die Heizkörper sind im Winter immer an." },
+  { "german": "die Verwendungszweck", "portuguese": "a propósito (da transferência)", "example": "Bitte gib den Verwendungszweck auf der Überweisung an." },
+  { "german": "verzeichnen", "portuguese": "registar", "example": "Das Unternehmen konnte einen starken Umsatzanstieg verzeichnen." },
+  { "german": "abbuchen", "portuguese": "debitar (dinheiro deduzido)", "example": "Der Betrag wird automatisch von deinem Konto abgebucht." },
+  { "german": "die Schuld(en)", "portuguese": "dívida(s) ou culpa", "example": "Er hat seine Schulden endlich beglichen." },
+  { "german": "das Soll", "portuguese": "débito (em divída)", "example": "Der Betrag ist im Soll gebucht worden." },
+  { "german": "der Betrag", "portuguese": "montante / quantidade", "example": "Bitte überweisen Sie den fälligen Betrag." },
+  { "german": "enthalten", "portuguese": "conter / incluir, contain", "example": "Dieses Buch enthält viele interessante Informationen." },
+  { "german": "herstellen", "portuguese": "produzir", "example": "Unsere Firma stellt hochwertige Möbel her." },
+  { "german": "das Regal", "portuguese": "a prateleira", "example": "Stell die Bücher bitte ins Regal." },
+  { "german": "das Gerät", "portuguese": "o dispositivo / aparelho", "example": "Das neue Gerät ist sehr benutzerfreundlich." },
+  { "german": "statt", "portuguese": "em vez de", "example": "Ich trinke Kaffee statt Tee." },
+  { "german": "einrichten", "portuguese": "configurar (e algo mais)", "example": "Wir müssen das Büro neu einrichten." },
+  { "german": "der Anwalt", "portuguese": "o advogado", "example": "Sie hat einen erfahrenen Anwalt konsultiert." },
+  { "german": "herauskommen", "portuguese": "sair", "example": "Was wird dabei herauskommen?" },
+  { "german": "stecken", "portuguese": "colocar, pôr, inserir", "example": "Steck den Schlüssel ins Schloss." },
+  { "german": "die Taste", "portuguese": "a botão / tecla", "example": "Drücken Sie die Enter-Taste." },
+  { "german": "die Bestätigung", "portuguese": "a confirmação", "example": "Ich habe eine Bestätigung meiner Bestellung erhalten." },
+  { "german": "der Kontoauszug", "portuguese": "o extrato bancário", "example": "Bitte überprüfen Sie Ihren letzten Kontoauszug." },
+  { "german": "einziehen", "portuguese": "puxar para dentro / move in (entrar)", "example": "Die neuen Mieter werden nächste Woche einziehen." },
+  { "german": "schildern", "portuguese": "descrever", "example": "Er konnte die Situation genau schildern." },
+
+  { "german": "überziehen", "portuguese": "é tipo levantar mais dinheiro do que o saldo da conta", "example": "Ich habe mein Konto überzogen." },
+  { "german": "leihen", "portuguese": "emprestar", "example": "Kannst du mir dein Buch leihen?" },
+  { "german": "die Gebühr(en)", "portuguese": "taxa, taxas", "example": "Für diesen Service fallen Gebühren an." },
+  { "german": "schauen", "portuguese": "olhar", "example": "Ich schaue aus dem Fenster." },
+  { "german": "sehen", "portuguese": "ver", "example": "Ich kann dich nicht sehen." },
+  { "german": "zeigen", "portuguese": "mostrar", "example": "Kannst du mir den Weg zeigen?" },
+  { "german": "rechnen", "portuguese": "calcular", "example": "Ich muss noch die Kosten rechnen." },
+  { "german": "der Tonfall", "portuguese": "tom de voz", "example": "Ihr Tonfall verriet ihre Nervosität." },
+  { "german": "spannend", "portuguese": "excitante", "example": "Das Buch ist sehr spannend." },
+  { "german": "der Überfall", "portuguese": "o assalto / roubo", "example": "Es gab einen Überfall auf die Bank." },
+  { "german": "der Vorgesetzte", "portuguese": "o supervisor", "example": "Mein Vorgesetzter hat mir geholfen." },
+  { "german": "vermuten", "portuguese": "supor/presumir", "example": "Ich vermute, er kommt später." },
+  { "german": "das Geschlecht", "portuguese": "sexo (masculino / feminino)", "example": "Bitte geben Sie Ihr Geschlecht an." },
+  { "german": "weiblich", "portuguese": "feminino", "example": "Das ist ein weiblicher Vorname." },
+  { "german": "männlich", "portuguese": "masculino", "example": "Er hat eine männliche Stimme." },
+  { "german": "auf jeden Fall", "portuguese": "em todo o caso", "example": "Auf jeden Fall komme ich zur Party." },
+  { "german": "das Einkommen", "portuguese": "rendimento (salário)", "example": "Sein Einkommen ist sehr hoch." },
+  { "german": "abgeben", "portuguese": "entregar", "example": "Du musst die Hausaufgaben morgen abgeben." },
+  { "german": "grundsätzlich", "portuguese": "basicamente", "example": "Grundsätzlich stimme ich dir zu." },
+  { "german": "der Empfänger", "portuguese": "o destinatário", "example": "Der Brief wurde an den falschen Empfänger geschickt." },
+  { "german": "eingeben", "portuguese": "introduzir / digitar", "example": "Bitte gib dein Passwort ein." },
+  { "german": "tun", "portuguese": "fazer", "example": "Was soll ich jetzt tun?" },
+  { "german": "zusätzlich", "portuguese": "adicionalmente", "example": "Wir bieten zusätzlich einen Lieferservice an." },
+  { "german": "gültig", "portuguese": "válido", "example": "Das Ticket ist bis morgen gültig." },
+  { "german": "damit", "portuguese": "para que / assim", "example": "Ich lerne, damit ich die Prüfung bestehe." },
+  { "german": "wohl", "portuguese": "bem / provavelmente", "example": "Er ist wohl schon gegangen." },
+  { "german": "wahrscheinlich", "portuguese": "provavelmente", "example": "Es wird wahrscheinlich regnen." },
+  { "german": "löschen", "portuguese": "eliminar / apagar", "example": "Du kannst diese Datei löschen." },
+
+  { "german": "empfehlen", "portuguese": "recomendar", "example": "Ich kann dieses Restaurant sehr empfehlen." },
+  { "german": "zuletzt", "portuguese": "finalmente / por fim", "example": "Zuletzt haben wir noch einen Kaffee getrunken." },
+  { "german": "leichtsinnig", "portuguese": "imprudente / descuidado", "example": "Sei nicht so leichtsinnig!" },
+  { "german": "aufgeben", "portuguese": "desistir / abandonar colocar/ fazer uma encomenda", "example": "Ich werde niemals aufgeben." },
+  { "german": "das Vorhaben", "portuguese": "o plano", "example": "Unser Vorhaben ist sehr ambitioniert." },
+  { "german": "vorhaben", "portuguese": "pretender", "example": "Was hast du heute vor?" },
+  { "german": "überzeugen", "portuguese": "convencer", "example": "Ich konnte ihn überzeugen, mitzukommen." },
+  { "german": "lügen", "portuguese": "mentir", "example": "Er hat mich angelogen." },
+  { "german": "witzig", "portuguese": "engraçado / funny", "example": "Der Film war sehr witzig." },
+  { "german": "bestimmt", "portuguese": "com certeza / certainly", "example": "Das ist bestimmt wahr." },
+  { "german": "die Sorge", "portuguese": "a preocupação / worry", "example": "Ich mache mir Sorgen um dich." },
+  { "german": "versprechen", "portuguese": "prometer", "example": "Ich verspreche dir, pünktlich zu sein." },
+  { "german": "der Streit", "portuguese": "a briga / fight / disputa", "example": "Sie hatten einen kleinen Streit." },
+  { "german": "vereinbaren", "portuguese": "combinar /acordar em algo / de acordo", "example": "Wir müssen einen Termin vereinbaren." },
+  { "german": "höflich", "portuguese": "educadamente / polite", "example": "Er hat sehr höflich geantwortet." },
+  { "german": "einleiten", "portuguese": "iniciar / introduzir", "example": "Wir müssen Maßnahmen einleiten." },
+  { "german": "stattfinden", "portuguese": "ter lugar / can happen (take place)", "example": "Das Konzert wird im Park stattfinden." },
+  { "german": "die Zeitschrift", "portuguese": "a revista / magazine", "example": "Ich lese gerne diese Zeitschrift." },
+  { "german": "außerdem", "portuguese": "para além disso / in addition", "example": "Außerdem habe ich noch eine Frage." },
+  { "german": "der König", "portuguese": "o rei", "example": "Der König regiert das Land." },
+  { "german": "der Schiff", "portuguese": "o navio", "example": "Das Schiff fährt aufs Meer hinaus." },
+  { "german": "aufwachsen", "portuguese": "crescer (grow up / crescer na infância)", "example": "Ich bin auf dem Land aufgewachsen." },
+  { "german": "wachsen", "portuguese": "crescer", "example": "Die Blumen wachsen schnell." },
+  { "german": "riechen", "portuguese": "cheirar / sentir (odor)", "example": "Es riecht nach frischem Brot." },
+  { "german": "das reicht nicht", "portuguese": "isso não é suficiente", "example": "Das reicht nicht, wir brauchen mehr." },
+  { "german": "verbessern", "portuguese": "melhorar", "example": "Ich möchte mein Deutsch verbessern." },
+  { "german": "die Wut", "portuguese": "a raiva", "example": "Er spürte eine große Wut in sich." },
+  { "german": "reichen", "portuguese": "alcançar / passar / ser suficiente", "example": "Kannst du mir bitte das Salz reichen?" },
+  { "german": "wütend", "portuguese": "furioso / zangado", "example": "Er war wütend, weil er zu spät gekommen ist." },
+
+  { "german": "die Lücke", "portuguese": "a lacuna / o espaço / gap", "example": "Es gibt eine große Lücke in meiner Argumentation." },
+  { "german": "leicht", "portuguese": "fácil, leve", "example": "Diese Aufgabe ist sehr leicht." },
+  { "german": "voneinander", "portuguese": "um do outro", "example": "Wir lernen voneinander." },
+  { "german": "verschieden", "portuguese": "vários / diferente", "example": "Wir haben verschiedene Meinungen." },
+  { "german": "die Einschränkung", "portuguese": "restrição", "example": "Es gibt Einschränkungen bei der Nutzung." },
+  { "german": "erfolgen", "portuguese": "ocorrer", "example": "Die Lieferung wird morgen erfolgen." },
+  { "german": "der Gegensatz", "portuguese": "o contraste / o oposto", "example": "Im Gegensatz dazu ist es sehr kalt." },
+  { "german": "gemütlich", "portuguese": "aconchegante", "example": "Unser Wohnzimmer ist sehr gemütlich." },
+  { "german": "die Grenze", "portuguese": "a fronteira / o limite", "example": "Wir überqueren die Grenze." },
+  { "german": "allerdings / jedoch", "portuguese": "no entanto", "example": "Ich würde gerne kommen, allerdings habe ich schon etwas vor." },
+  { "german": "die Unregelmäßigkeit", "portuguese": "irregularidade", "example": "Es gab einige Unregelmäßigkeiten." },
+  { "german": "die Aussage", "portuguese": "a afirmação / a declaração", "example": "Ihre Aussage war sehr klar." },
+  { "german": "der Flüchtling", "portuguese": "o refugiado", "example": "Viele Flüchtlinge suchen Schutz." },
+  { "german": "die Ursache", "portuguese": "a causa", "example": "Die Ursache des Problems ist unklar." },
+  { "german": "meist", "portuguese": "principalmente", "example": "Meistens esse ich zu Hause." },
+  { "german": "weshalb", "portuguese": "porquê? / por que?", "example": "Weshalb bist du so spät?" },
+  { "german": "traurig", "portuguese": "triste", "example": "Die Nachricht hat mich traurig gemacht." },
+  { "german": "beachten", "portuguese": "notar", "example": "Bitte beachten Sie die Regeln." },
+  { "german": "verbinden", "portuguese": "conectar, combinar, ligar", "example": "Kannst du mich mit der Zentrale verbinden?" },
+  { "german": "weinen", "portuguese": "chorar", "example": "Das Kind hat lange geweint." },
+  { "german": "die Tränen", "portuguese": "as lágrimas", "example": "Ihr Gesicht war voller Tränen." },
+  { "german": "sogar", "portuguese": "até / inclusive", "example": "Er kann sogar rückwärts sprechen." },
+  { "german": "passen auf", "portuguese": "olhar para (tomar conta de algo)", "example": "Ich passe auf meine kleine Schwester auf." },
+  { "german": "die Verpflegung", "portuguese": "o catering", "example": "Für das Event ist die Verpflegung organisiert." },
+  { "german": "das Lebensmittel", "portuguese": "o alimento / os mantimentos", "example": "Wir kaufen gesunde Lebensmittel." },
+  { "german": "die Vermittlung", "portuguese": "a mediação / a intermediação", "example": "Sie hat bei der Vermittlung geholfen." },
+  { "german": "die Einwanderung", "portuguese": "a imigração", "example": "Die Einwanderungspolitik wird diskutiert." },
+
+  { "german": "die Erinnerung", "portuguese": "lembrança", "example": "Ich habe keine Erinnerung daran." },
+  { "german": "die Geschichte", "portuguese": "a história", "example": "Erzähl mir eine Geschichte." },
+  { "german": "jeweils", "portuguese": "cada / respetivamente", "example": "Die Aufgaben werden jeweils am Montag verteilt." },
+  { "german": "die Zusammenfassung", "portuguese": "o resumo", "example": "Bitte lies die Zusammenfassung." },
+  { "german": "verlieren", "portuguese": "perder", "example": "Ich möchte mein Portemonnaie nicht verlieren." },
+  { "german": "die Flucht", "portuguese": "a fuga", "example": "Er ist auf der Flucht." },
+  { "german": "flüchten", "portuguese": "fugir", "example": "Die Tiere flüchteten vor dem Feuer." },
+  { "german": "die Erlaubnis", "portuguese": "a permissão", "example": "Ich brauche deine Erlaubnis." },
+  { "german": "verbringen (Zeit)", "portuguese": "passar (tempo)", "example": "Wie verbringst du deine Freizeit?" },
+  { "german": "miteinander", "portuguese": "um com o outro", "example": "Wir arbeiten gut miteinander." },
+  { "german": "verlassen", "portuguese": "deixar / abandonar", "example": "Er will das Haus verlassen." },
+  { "german": "einige (Zeit)", "portuguese": "algum tempo", "example": "Ich brauche noch einige Zeit." },
+  { "german": "schließlich", "portuguese": "finalmente -> endlich", "example": "Schließlich haben wir die Lösung gefunden." },
+  { "german": "herausfinden", "portuguese": "descobrir / find out", "example": "Wir müssen herausfinden, was passiert ist." },
+  { "german": "die Folge", "portuguese": "a consequência / o episódio (Parte 1)", "example": "Das ist die Folge deiner Entscheidung." },
+  { "german": "suchen", "portuguese": "procurar", "example": "Ich suche meine Schlüssel." },
+  { "german": "während", "portuguese": "durante / during / while", "example": "Während des Essens spricht man nicht." },
+  { "german": "die Abwesenheit", "portuguese": "a ausência", "example": "Seine Abwesenheit wurde bemerkt." },
+  { "german": "der Bescheid", "portuguese": "a notificação", "example": "Ich warte noch auf den Bescheid." },
+  { "german": "geschehen", "portuguese": "acontecer", "example": "Was ist geschehen?" },
+  { "german": "bisher", "portuguese": "até agora / until now / so far", "example": "Bisher läuft alles gut." },
+  { "german": "was bisher geschah", "portuguese": "o que aconteceu até agora", "example": "Lassen Sie uns rekapitulieren, was bisher geschah." },
+  { "german": "zuerst", "portuguese": "primeiro / primeiramente", "example": "Zuerst essen wir, dann gehen wir." },
+  { "german": "eigentlich", "portuguese": "na verdade / de facto / actually", "example": "Eigentlich mag ich Kaffee nicht." },
+  { "german": "tatsächlich", "portuguese": "na verdade / de facto / actually", "example": "Tatsächlich war er gar nicht da." },
+  { "german": "vergleichen", "portuguese": "comparar (a comparação)", "example": "Man kann Äpfel nicht mit Birnen vergleichen." },
+
+  { "german": "auftippen", "portuguese": "clicar / tocar", "example": "Er hat die Nummer schnell auf sein Handy aufgetippt." },
+  { "german": "ausdrucken", "portuguese": "imprimir", "example": "Kannst du das Dokument ausdrucken?" },
+  { "german": "der Abbruch", "portuguese": "o cancelamento", "example": "Der Abbruch des Projekts war unerwartet." },
+  { "german": "verraten", "portuguese": "revelar / trair", "example": "Ich werde niemals ein Geheimnis verraten." },
+  { "german": "die Auszahlung", "portuguese": "o levantamento (dinheiro)", "example": "Die Auszahlung erfolgt nächste Woche." },
+  { "german": "draußen", "portuguese": "fora / lá fora / na rua", "example": "Das Wetter ist schön draußen." },
+  { "german": "schieben", "portuguese": "empurrar", "example": "Schieb den Stuhl bitte näher." },
+  { "german": "die Endung", "portuguese": "a terminação / o sufixo", "example": "Das Verb hat eine starke Endung." },
+  { "german": "das Muster", "portuguese": "a amostra / um padrão", "example": "Das Kleid hat ein schönes Muster." },
+  { "german": "abhauen", "portuguese": "escapar / fugir", "example": "Wir müssen hier abhauen." },
+  { "german": "mehrere", "portuguese": "vários (as) / diversos (as)", "example": "Ich habe mehrere Bücher gelesen." },
+  { "german": "ledig", "portuguese": "solteiro", "example": "Sie ist noch ledig." },
+  { "german": "die Nichte", "portuguese": "a sobrinha", "example": "Meine Nichte besucht uns am Wochenende." },
+  { "german": "der Neffe", "portuguese": "o sobrinho", "example": "Mein Neffe ist sehr talentiert." },
+  { "german": "der/die Enkel", "portuguese": "o neto / os netos", "example": "Meine Enkelkinder spielen im Garten." },
+  { "german": "die Enkelin", "portuguese": "a neta", "example": "Meine Enkelin hat Geburtstag." },
+  { "german": "nennen", "portuguese": "chamar", "example": "Wie darf ich Sie nennen?" },
+  { "german": "die Erziehung", "portuguese": "a educação", "example": "Eine gute Erziehung ist wichtig." },
+  { "german": "streng", "portuguese": "severo / rigoroso / rígido", "example": "Meine Lehrerin ist sehr streng." },
+  { "german": "durchschnittlich", "portuguese": "médio / mediano", "example": "Das Ergebnis war durchschnittlich." },
+  { "german": "das Lied", "portuguese": "a canção", "example": "Ich singe gerne dieses Lied." },
+  { "german": "Worum geht's?", "portuguese": "sobre o que?", "example": "Worum geht es in dem Film?" },
+  { "german": "vorbereiten", "portuguese": "preparar", "example": "Ich muss mich auf die Prüfung vorbereiten." },
+  { "german": "die Mütze", "portuguese": "o gorro", "example": "Ich trage eine Mütze im Winter." },
+  { "german": "der Schal", "portuguese": "o cachecol", "example": "Sie trägt einen warmen Schal." },
+  { "german": "verwitwet", "portuguese": "viúvo(a)", "example": "Sie ist seit vielen Jahren verwitwet." },
+  { "german": "geschieden", "portuguese": "divorciado(a)", "example": "Meine Eltern sind geschieden." },
+  { "german": "lächeln", "portuguese": "sorrir", "example": "Sie konnte nicht anders, als zu lächeln." },
+
+  { "german": "der Ruhestand", "portuguese": "a reforma / a aposentadoria", "example": "Er genießt seinen Ruhestand." },
+  { "german": "ich muss los", "portuguese": "tenho de ir (embora)", "example": "Es ist spät, ich muss los." },
+  { "german": "das Pflegeheim", "portuguese": "o lar de idosos (mais chill)", "example": "Meine Großmutter lebt in einem Pflegeheim." },
+  { "german": "die Unterstützung", "portuguese": "o suporte", "example": "Vielen Dank für deine Unterstützung." },
+  { "german": "der Rollstuhl", "portuguese": "a cadeira de rodas", "example": "Der Patient benötigt einen Rollstuhl." },
+  { "german": "der Gehstock", "portuguese": "a bengala", "example": "Er braucht einen Gehstock zum Laufen." },
+  { "german": "brechen", "portuguese": "partir", "example": "Du solltest dieses Versprechen nicht brechen." },
+  { "german": "der Zusammenbruch", "portuguese": "o colapso", "example": "Er hatte einen nervösen Zusammenbruch." },
+  { "german": "die Beschwerde", "portuguese": "a queixa / o sintoma", "example": "Ich möchte eine Beschwerde einreichen." },
+  { "german": "Es tut weh", "portuguese": "dói / doer", "example": "Mein Bein tut weh." },
+  { "german": "das Bein", "portuguese": "a perna", "example": "Ich habe mir das Bein gebrochen." },
+  { "german": "das Geschirr", "portuguese": "a louça", "example": "Bitte räum das Geschirr weg." },
+  { "german": "entspannen", "portuguese": "relaxar / descontrair", "example": "Ich möchte mich nach der Arbeit entspannen." },
+  { "german": "anziehen", "portuguese": "vestir", "example": "Ich muss mich noch anziehen." },
+  { "german": "begleiten", "portuguese": "acompanhar", "example": "Ich werde dich zum Bahnhof begleiten." },
+  { "german": "sich beeilen", "portuguese": "apressar-se", "example": "Wir müssen uns beeilen, sonst verpassen wir den Zug." },
+  { "german": "das Befinden", "portuguese": "o estado (da pessoa)", "example": "Wie ist Ihr Befinden heute?" },
+  { "german": "geduldig", "portuguese": "pacientemente", "example": "Du musst geduldig sein." },
+  { "german": "die Verzeihung", "portuguese": "pedir perdão", "example": "Ich bitte um Verzeihung für meinen Fehler." },
+  { "german": "schrecklich", "portuguese": "terrível", "example": "Das Wetter war schrecklich." },
+  { "german": "ausruhen", "portuguese": "descansar", "example": "Ich muss mich ausruhen." },
+  { "german": "blendend", "portuguese": "maravilhosamente", "example": "Die Sonne scheint blendend." },
+  { "german": "die Kleinigkeit", "portuguese": "a pequena coisa", "example": "Das ist nur eine Kleinigkeit." },
+  { "german": "einsam", "portuguese": "solitário", "example": "Er fühlt sich oft einsam." },
+  { "german": "der Quatsch", "portuguese": "o disparate", "example": "Rede keinen Quatsch!" },
+  { "german": "sondern", "portuguese": "mas / porém", "example": "Das ist nicht rot, sondern blau." },
+
+  { "german": "sich unterhalten", "portuguese": "conversar", "example": "Wir unterhalten uns gerne über Bücher." },
+  { "german": "ausgezeichnet", "portuguese": "excelentemente", "example": "Das Essen war ausgezeichnet." },
+  { "german": "schwach", "portuguese": "fraco(a)", "example": "Ich fühle mich heute sehr schwach." },
+  { "german": "es handelt (von)", "portuguese": "trata-se (de uma ...)", "example": "Der Film handelt von einer wahren Geschichte." },
+  { "german": "Im Fall", "portuguese": "no caso de", "example": "Im Fall eines Notfalls rufen Sie bitte an." },
+  { "german": "die Verneinung", "portuguese": "a negação", "example": "Die Verneinung ist ein wichtiger Teil der Grammatik." },
+  { "german": "der Kellner", "portuguese": "o empregado de mesa", "example": "Der Kellner war sehr freundlich." },
+  { "german": "deswegen", "portuguese": "por isso / portanto", "example": "Deswegen bin ich hier." },
+  { "german": "das Mitglied", "portuguese": "o membro", "example": "Er ist ein aktives Mitglied der Vereinigung." },
+  { "german": "das Altenheim", "portuguese": "o lar de idosos (todos fodidos)", "example": "Sie besuchen ihre Oma im Altenheim." },
+  { "german": "plötzlich", "portuguese": "de repente / subitamente", "example": "Plötzlich stand er vor mir." },
+  { "german": "dreckig", "portuguese": "sujo", "example": "Meine Schuhe sind sehr dreckig." },
+  { "german": "schmutzig", "portuguese": "sujo", "example": "Meine Schuhe sind sehr schmutzig." },
+  { "german": "fegen", "portuguese": "varrer (o chão)", "example": "Kannst du bitte den Boden fegen?" },
+  { "german": "gießen", "portuguese": "regar (as plantas) / deitar (líquido)", "example": "Vergiss nicht, die Blumen zu gießen." },
+  { "german": "trocknen", "portuguese": "secar", "example": "Du solltest deine Haare trocknen." },
+  { "german": "der Schwamm", "portuguese": "a esponja", "example": "Gib mir den Schwamm zum Abwaschen." },
+  { "german": "der Lappen", "portuguese": "o pano", "example": "Wisch den Tisch mit einem feuchten Lappen ab." },
+  { "german": "Staub wischen", "portuguese": "limpar o pó", "example": "Ich muss noch Staub wischen." },
+  { "german": "die Pflicht", "portuguese": "a obrigação / o dever", "example": "Es ist meine Pflicht, dir zu helfen." },
+  { "german": "die Vorgabe", "portuguese": "a especificação", "example": "Wir müssen uns an die Vorgaben halten." },
+  { "german": "anhängen", "portuguese": "anexar", "example": "Ich werde die Datei an die E-Mail anhängen." },
+  { "german": "die Mülltonne", "portuguese": "o caixote do lixo", "example": "Bitte wirf den Müll in die Mülltonne." },
+  { "german": "aufteilen", "portuguese": "dividir", "example": "Wir können die Arbeit aufteilen." },
+  { "german": "der Flur", "portuguese": "o corredor / o hall", "example": "Der Flur ist lang und dunkel." },
+  { "german": "der Gefallen", "portuguese": "o favor", "example": "Könntest du mir einen Gefallen tun?" },
+
+  { "german": "dafür", "portuguese": "por isso / a favor disso (concordância)", "example": "Ich bin dafür, dass wir das Projekt starten." },
+  { "german": "sich beschweren", "portuguese": "queixar-se", "example": "Sie beschwert sich oft über das Wetter." },
+  { "german": "die Nachbarschaft", "portuguese": "a vizinhança", "example": "Die Nachbarschaft ist sehr freundlich." },
+  { "german": "sich aufregen", "portuguese": "ficar chateado", "example": "Er regt sich schnell auf." },
+  { "german": "die Rücksicht", "portuguese": "a consideração / o respeito", "example": "Nehmen Sie bitte Rücksicht auf andere." },
+  { "german": "stören", "portuguese": "incomodar / perturbar", "example": "Bitte nicht stören." },
+  { "german": "unhöflich", "portuguese": "rude / mal-educado", "example": "Das war sehr unhöflich von ihm." },
+  { "german": "das Verhalten", "portuguese": "o comportamento", "example": "Sein Verhalten war unangebracht." },
+  { "german": "eng", "portuguese": "estreito / apertado / confinado -> engen Raum (espaço confinado)", "example": "Der Pullover ist mir zu eng." },
+  { "german": "auftauchen", "portuguese": "aparecer / surgir", "example": "Plötzlich tauchte ein Problem auf." },
+  { "german": "nebenan", "portuguese": "ao lado (Wohnung nebenan) -> casa ao lado", "example": "Unsere Nachbarn wohnen nebenan." },
+  { "german": "das Mehl", "portuguese": "a farinha", "example": "Ich brauche Mehl, um Kuchen zu backen." },
+  { "german": "schimpfen", "portuguese": "ralhar", "example": "Er schimpft oft über die Politik." },
+  { "german": "zählen", "portuguese": "contar / enumerar", "example": "Kannst du bis zehn zählen?" },
+  { "german": "das Verhältnis", "portuguese": "a relação / o rácio", "example": "Sie haben ein gutes Verhältnis zueinander." },
+  { "german": "schlecht gelaunt", "portuguese": "mal-humorado", "example": "Er ist heute schlecht gelaunt." },
+  { "german": "die Betreuung", "portuguese": "o acolhimento (de crianças) / o cuidado", "example": "Die Betreuung der Kinder ist wichtig." },
+  { "german": "erziehen", "portuguese": "educar", "example": "Eltern erziehen ihre Kinder." },
+  { "german": "vorhin", "portuguese": "anteriormente / há pouco", "example": "Ich habe ihn vorhin gesehen." },
+  { "german": "betreuen", "portuguese": "cuidar (de algo) / supervisionar", "example": "Sie betreut die alten Menschen." },
+  { "german": "freiwillig", "portuguese": "voluntariamente", "example": "Er arbeitet freiwillig in der Suppenküche." },
+  { "german": "sich Gedanken machen", "portuguese": "preocupar (com algo) / pensar em", "example": "Mach dir keine Gedanken darüber." },
+  { "german": "durchdrehen", "portuguese": "enlouquecer / ficar maluco", "example": "Nach all dem Stress ist er fast durchgedreht." },
+  { "german": "die Entscheidung", "portuguese": "a decisão", "example": "Das war eine schwierige Entscheidung." },
+
+  { "german": "vorstellen", "portuguese": "introduzir / apresentar / imaginar", "example": "Darf ich mich vorstellen?" },
+  { "german": "anders", "portuguese": "diferente / de outro modo", "example": "Das ist ganz anders, als ich dachte." },
+  { "german": "verwandt", "portuguese": "relacionado", "example": "Wir sind miteinander verwandt." },
+  { "german": "großartig", "portuguese": "ótimo / excelente", "example": "Das war eine großartige Idee!" },
+  { "german": "die Stimme", "portuguese": "a voz", "example": "Sie hat eine schöne Stimme." },
+  { "german": "wiegen", "portuguese": "pesar", "example": "Wie viel wiegt das Paket?" },
+  { "german": "die Zutat", "portuguese": "o ingrediente", "example": "Welche Zutaten brauchst du für den Kuchen?" },
+  { "german": "Autoanhänger", "portuguese": "atrelado de carro", "example": "Wir brauchen einen Autoanhänger für den Umzug." },
+  { "german": "der Wohnwagen", "portuguese": "a caravana", "example": "Wir machen Urlaub mit dem Wohnwagen." },
+  { "german": "heftig", "portuguese": "feroz / agressivo", "example": "Der Sturm war sehr heftig." },
+  { "german": "ausfallen", "portuguese": "falhar / cancelar", "example": "Der Unterricht fällt heute aus." },
+  { "german": "ziemlich", "portuguese": "bastante / muito", "example": "Es ist ziemlich kalt draußen." },
+  { "german": "der Sekt", "portuguese": "o espumante / o champanhe", "example": "Möchten Sie ein Glas Sekt?" },
+  { "german": "gelten", "portuguese": "aplicar / contar", "example": "Die Regeln gelten für alle." },
+  { "german": "faulenzen", "portuguese": "relaxar / chill", "example": "Am Wochenende möchte ich nur faulenzen." },
+  { "german": "das Ergebnis", "portuguese": "o resultado", "example": "Das Ergebnis der Prüfung war gut." },
+  { "german": "das Reiseziel", "portuguese": "o destino (turístico)", "example": "Unser Reiseziel ist Paris." },
+  { "german": "stehen hoch im Kurs", "portuguese": "ser muito popular", "example": "Aktien stehen hoch im Kurs." },
+  { "german": "die Vorliebe", "portuguese": "a preferência", "example": "Meine Vorliebe ist die italienische Küche." },
+  { "german": "umständlich", "portuguese": "complicado", "example": "Das war eine sehr umständliche Erklärung." },
+  { "german": "darauf ankommen", "portuguese": "isso depende de", "example": "Es kommt darauf an, wie das Wetter wird." },
+  { "german": "die Beratung", "portuguese": "o aconselhamento / a consultoria", "example": "Ich brauche eine gute Beratung." },
+  { "german": "unter anderem", "portuguese": "entre outras coisas", "example": "Er sprach unter anderem über seine Reisen." },
+  { "german": "beschließen", "portuguese": "decidir", "example": "Wir müssen eine Entscheidung beschließen." },
+  { "german": "benötigen", "portuguese": "necessitar / precisar", "example": "Ich benötige mehr Informationen." },
+  { "german": "der Umstand", "portuguese": "a circunstância / o incômodo", "example": "Unter diesen Umständen ist das nicht möglich." },
+  { "german": "angenehm", "portuguese": "agradável", "example": "Das ist eine angenehme Situation." },
+
+  { "german": "der Aufenthalt", "portuguese": "a estadia", "example": "Der Aufenthalt in Berlin war sehr schön." },
+  { "german": "inbegriffen", "portuguese": "incluído", "example": "Der Preis ist inklusive Frühstück inbegriffen." },
+  { "german": "die Unterkunft", "portuguese": "o alojamento", "example": "Die Unterkunft war sehr komfortável." },
+  { "german": "erholsam", "portuguese": "relaxante / tranquilo", "example": "Der Urlaub war sehr erholsam." },
+  { "german": "durcheinandergeraten", "portuguese": "misturar / ficar misturado", "example": "Die Dokumente sind durcheinandergeraten." },
+  { "german": "die Badewanne", "portuguese": "a banheira", "example": "Ich entspanne mich gerne in der Badewanne." },
+  { "german": "abweichen", "portuguese": "divergir", "example": "Unsere Meinungen weichen voneinander ab." },
+  { "german": "entlanggehen", "portuguese": "caminhar", "example": "Wir gehen den Fluss entlang." },
+  { "german": "der Gang", "portuguese": "o corredor / a marcha", "example": "Der Gang ist sehr lang." },
+  { "german": "entlang", "portuguese": "ao longo de", "example": "Entlang des Weges gibt es viele Bäume." },
+  { "german": "führen", "portuguese": "guiar / levar (a algum lado)", "example": "Diese Straße führt zum Bahnhof." },
+  { "german": "beinhalten", "portuguese": "incluir", "example": "Der Kurs beinhaltet theoretische und praktische Teile." },
+  { "german": "aufgeregt", "portuguese": "entusiasmado / animado", "example": "Sie war sehr aufgeregt vor dem Konzert." },
+  { "german": "selten", "portuguese": "raro", "example": "Solche Ereignisse sind selten." },
+  { "german": "gemäß", "portuguese": "de acordo com", "example": "Gemäß den Regeln ist das nicht erlaubt." },
+  { "german": "verabschieden", "portuguese": "despedir-se / dizer adeus", "example": "Wir haben uns am Flughafen verabschiedet." },
+  { "german": "der Rat", "portuguese": "o conselho / o conselho (órgão)", "example": "Ich brauche deinen Rat." },
+  { "german": "bevorstehend (reise)", "portuguese": "próxima viagem / viagem futura", "example": "Die bevorstehende Reise ist sehr spannend." },
+  { "german": "die Vermutung", "portuguese": "a suposição / a preocupação", "example": "Meine Vermutung hat sich bestätigt." },
+  { "german": "abfahren", "portuguese": "partir (o comboio)", "example": "Der Zug wird pünktlich abfahren." },
+  { "german": "durchfahren", "portuguese": "passar por / atravessar (sem parar)", "example": "Wir werden die Stadt ohne Halt durchfahren." },
+  { "german": "übrigens", "portuguese": "a propósito / by the way", "example": "Übrigens, wie geht es deiner Familie?" },
+  { "german": "ärgerlich", "portuguese": "irritante / aborrecido", "example": "Das ist eine ärgerliche Situation." },
+  { "german": "entwerten", "portuguese": "validar / invalidar (o bilhete)", "example": "Vergessen Sie nicht, Ihr Ticket zu entwerten." },
+  { "german": "erwischen", "portuguese": "apanhar / pegar", "example": "Ich hoffe, ich erwische den Bus noch." },
+  { "german": "öffentlich", "portuguese": "público / publicamente", "example": "Die Veranstaltung ist öffentlich." },
+  { "german": "das Verkehrsmittel", "portuguese": "o meio de transporte", "example": "Die Bahn ist ein gutes Verkehrsmittel." },
+
+  { "german": "die Ermäßigung", "portuguese": "o desconto", "example": "Es gibt eine Ermäßigung für Studenten." },
+  { "german": "niedrig", "portuguese": "baixo / reduzido", "example": "Der Wasserstand ist sehr niedrig." },
+  { "german": "die Angelegenheit", "portuguese": "o assunto / matéria", "example": "Das ist eine wichtige Angelegenheit." },
+  { "german": "die Bedingung", "portuguese": "a condição", "example": "Die Bedingung für den Vertrag ist fair." },
+  { "german": "darstellen", "portuguese": "representar", "example": "Das Bild soll die Freiheit darstellen." },
+  { "german": "wortwörtlich", "portuguese": "literalmente", "example": "Er hat meine Worte wortwörtlich genommen." },
+  { "german": "tragen", "portuguese": "usar / vestir / transportar", "example": "Ich kann die schwere Tasche nicht tragen." },
+  { "german": "ehrenamtlich", "portuguese": "voluntário", "example": "Sie arbeitet ehrenamtlich in einem Tierheim." },
+  { "german": "die Anrede", "portuguese": "saudação / forma de tratamento", "example": "Wählen Sie die korrekte Anrede für den Brief." },
+  { "german": "sich bewegen", "portuguese": "mexer-se / mover-se", "example": "Er kann sich nicht gut bewegen." },
+  { "german": "verletzen", "portuguese": "ferir / magoar / lesionar", "example": "Er hat sich beim Sport verletzt." },
+  { "german": "sich erholen", "portuguese": "relaxar / recuperar", "example": "Ich muss mich von der Arbeit erholen." },
+  { "german": "verabreden", "portuguese": "marcar / combinar", "example": "Wir müssen uns für ein Treffen verabreden." },
+  { "german": "die Klammern", "portuguese": "os parênteses", "example": "Text in Klammern ist oft eine Erklärung." },
+  { "german": "sich schminken", "portuguese": "maquilhar-se / pintar-se", "example": "Sie schminkt sich jeden Morgen." },
+  { "german": "die Werbung", "portuguese": "publicidade", "example": "Die Werbung im Fernsehen ist oft laut." },
+  { "german": "der Innenhof", "portuguese": "o pátio interior", "example": "Wir saßen im Innenhof des Hotels." },
+  { "german": "das Abenteuer", "portuguese": "a aventura", "example": "Das Leben ist ein großes Abenteuer." },
+  { "german": "die Laune", "portuguese": "o humor", "example": "Er hat heute gute Laune." },
+  { "german": "überzeugen", "portuguese": "convencer", "example": "Er konnte sie von seiner Idee überzeugen." },
+  { "german": "die Verabredung", "portuguese": "o encontro", "example": "Ich habe eine Verabredung mit einem Freund." },
+  { "german": "absagen", "portuguese": "cancelar", "example": "Ich musste das Treffen absagen." },
+  { "german": "der Veranstalter", "portuguese": "o organizador", "example": "Der Veranstalter hat alles gut geplant." },
+  { "german": "das Ereignis", "portuguese": "o evento", "example": "Das war ein unvergessliches Ereignis." },
+  { "german": "die Gegenwart", "portuguese": "o presente (temporal)", "example": "Leben Sie in der Gegenwart." },
+  { "german": "zusagen", "portuguese": "prometer / confirmar (presença)", "example": "Er hat seine Teilnahme zugesagt." },
+  { "german": "der Umschlag", "portuguese": "o envelope", "example": "Der Brief war in einem blauen Umschlag." },
+
+  { "german": "trauen", "portuguese": "casar / confiar", "example": "Ich traue dir mein Geheimnis an." },
+  { "german": "sich trauen", "portuguese": "atrever-se", "example": "Sie traut sich nicht, alleine zu reisen." },
+  { "german": "sich ärgern", "portuguese": "chatear-se / zornen-se (com alguém)", "example": "Er ärgert sich über den Lärm der Nachbarn." },
+  { "german": "enttäuschen", "portuguese": "decepcionar / desapontar", "example": "Das Ergebnis hat mich enttäuscht." },
+  { "german": "die Bewerbung", "portuguese": "a candidatura", "example": "Ich habe eine Bewerbung für die Stelle geschickt." },
+  { "german": "werfen", "portuguese": "lançar / atirar (algo)", "example": "Er wirft den Ball weit." },
+  { "german": "sich aufregen", "portuguese": "ficar chateado", "example": "Er regt sich schnell über kleine Dinge auf." },
+  { "german": "rege dich nicht auf", "portuguese": "chatear-se / aborrecer-se", "example": "Rege dich nicht auf, es ist nur ein Spiel." },
+  { "german": "der Mist", "portuguese": "estrume / esterco", "example": "Der Bauer brachte den Mist aufs Feld." },
+  { "german": "der Mut", "portuguese": "a coragem", "example": "Er fasste allen Mut zusammen." },
+  { "german": "der Pech", "portuguese": "o azar", "example": "Ich habe heute Pech gehabt." },
+  { "german": "doof", "portuguese": "tonto / estúpido", "example": "Das war eine doofe Idee." },
+  { "german": "aufmachen", "portuguese": "abrir", "example": "Kannst du das Fenster aufmachen?" },
+  { "german": "überhaupt", "portuguese": "de todo", "example": "Hast du überhaupt verstanden, was ich gesagt habe?" },
+  { "german": "unangenehm", "portuguese": "desagradável", "example": "Das Wetter ist heute sehr unangenehm." },
+  { "german": "ernst", "portuguese": "sério", "example": "Er nahm die Aufgabe sehr ernst." },
+  { "german": "die Mieterhöhung", "portuguese": "o aumento de renda", "example": "Die Mieterhöhung ist unakzeptabel." },
+  { "german": "steigen", "portuguese": "aumentar / subir", "example": "Die Preise steigen jedes Jahr." },
+  { "german": "der Vorschlag", "portuguese": "a sugestão / proposta", "example": "Ich habe einen guten Vorschlag für dich." },
+  { "german": "die Kunst", "portuguese": "a arte", "example": "Kunst ist ein wichtiger Teil der Kultur." },
+  { "german": "sich wundern", "portuguese": "surpreender-se / admirar-se", "example": "Ich wundere mich über seine Reaktion." },
+  { "german": "die Zustimmung", "portuguese": "o consentimento / autorização / aprovação", "example": "Wir brauchen deine Zustimmung für das Projekt." },
+  { "german": "der Widerspruch", "portuguese": "uma contradição", "example": "Das ist ein klarer Widerspruch." },
+  { "german": "begründen", "portuguese": "justificar", "example": "Sie konnte ihre Entscheidung gut begründen." },
+  { "german": "etwas ausdrücken", "portuguese": "expressar algo", "example": "Es ist schwer, Gefühle auszudrücken." },
+  { "german": "der Verein", "portuguese": "o clube", "example": "Ich bin Mitglied in einem Sportverein." },
+  { "german": "sich mit etwas beschäftigen", "portuguese": "lidar com algo", "example": "Er beschäftigt sich den ganzen Tag mit Computern." },
+  { "german": "der Mist", "portuguese": "estrume / esterco", "example": "Der Landwirt verteilt den Mist auf dem Feld." },
+
+  { "german": "beibringen", "portuguese": "ensinar", "example": "Er will mir Deutsch beibringen." },
+  { "german": "wehtun", "portuguese": "magoar / doer", "example": "Mein Kopf tut mir weh." },
+  { "german": "fremdgehen", "portuguese": "trair (numa relação) / ter um caso", "example": "Sie ist ihrem Freund fremdgegangen." },
+  { "german": "heilig", "portuguese": "santo / sagrado / sagradamente", "example": "Das ist ein heiliger Ort." },
+  { "german": "das Geheimnis", "portuguese": "o segredo", "example": "Erzähl mir dein Geheimnis." },
+  { "german": "missbraucht", "portuguese": "abusar / trair (confiança) / mal-tratar", "example": "Er hat das Vertrauen missbraucht." },
+  { "german": "klettern", "portuguese": "escalar", "example": "Wir gehen am Wochenende klettern." },
+  { "german": "der Begleiter", "portuguese": "o companheiro", "example": "Er war ein guter Begleiter auf der Reise." },
+  { "german": "zeichnen", "portuguese": "desenhar", "example": "Sie zeichnet gerne Landschaften." },
+  { "german": "ablehnen", "portuguese": "recusar / rejeitar", "example": "Sie konnte das Angebot nicht ablehnen." },
+  { "german": "fangen", "portuguese": "apanhar / capturar", "example": "Der Hund fängt den Ball." },
+  { "german": "angeln", "portuguese": "pescar", "example": "Ich gehe gerne angeln." },
+  { "german": "fürchterlich", "portuguese": "terrível / péssimo", "example": "Das Wetter ist fürchterlich." },
+  { "german": "furchtbar", "portuguese": "terrível", "example": "Das war eine furchtbare Nachricht." },
+  { "german": "das Reiten", "portuguese": "a equitação", "example": "Das Reiten ist mein Hobby." },
+  { "german": "das Turnen", "portuguese": "a ginástica", "example": "Meine Tochter mag das Turnen sehr." },
+  { "german": "gründen", "portuguese": "criar / fundar", "example": "Sie wollen eine neue Firma gründen." },
+  { "german": "eintragen", "portuguese": "preencher / registar", "example": "Bitte tragen Sie Ihren Namen in die Liste ein." },
+  { "german": "faul", "portuguese": "preguiçoso", "example": "Er ist zu faul zum Arbeiten." },
+  { "german": "die Hauptsache", "portuguese": "o principal / o mais importante", "example": "Die Hauptsache ist, dass du gesund bist." },
+  { "german": "die Abwechslung", "portuguese": "a variedade / diversidade", "example": "Ich brauche etwas Abwechslung in meinem Leben." },
+  { "german": "sich vorstellen", "portuguese": "imaginar", "example": "Kannst du dir das vorstellen?" },
+  { "german": "sich etwas leisten können", "portuguese": "conseguir comprar algo", "example": "Wir können uns dieses Auto nicht leisten." },
+  { "german": "vorhaben", "portuguese": "pretender / planear", "example": "Was hast du heute Abend vor?" },
+  { "german": "abhauen", "portuguese": "fugir / ir embora rapidamente", "example": "Er wollte abhauen, bevor jemand ihn sah." },
+  { "german": "beruhigen", "portuguese": "acalmar / tranquilizar", "example": "Bitte beruhige dich, alles wird gut." },
+
+  { "german": "die Mitgliedschaft", "portuguese": "a adesão / inscrição (num clube)", "example": "Die Mitgliedschaft im Sportverein ist günstig." },
+  { "german": "sinnvoll", "portuguese": "fazer sentido", "example": "Das ist eine sinnvolle Aufgabe." },
+  { "german": "das Ehrenamt", "portuguese": "o voluntariado", "example": "Sie engagiert sich im Ehrenamt." },
+  { "german": "ehrenamtlich", "portuguese": "voluntário", "example": "Er arbeitet ehrenamtlich für die Organisation." },
+  { "german": "schaden", "portuguese": "danificar / prejudicar / magoar", "example": "Rauchen kann der Gesundheit schaden." },
+  { "german": "der Schaden", "portuguese": "o dano", "example": "Der Schaden am Auto ist gering." },
+  { "german": "übernehmen", "portuguese": "assumir algo / tomar algo / assumir", "example": "Ich kann diese Aufgabe übernehmen." },
+  { "german": "sowieso", "portuguese": "de qualquer modo / assim como assim", "example": "Das wird sowieso passieren." },
+  { "german": "unentgeltlich", "portuguese": "gratuito", "example": "Die Beratung ist unentgeltlich." },
+  { "german": "die Einrichtung", "portuguese": "a instituição", "example": "Diese Einrichtung hilft obdachlosen Menschen." },
+  { "german": "die Verantwortung", "portuguese": "a responsabilidade", "example": "Er trägt die volle Verantwortung für das Projekt." },
+  { "german": "anwerben", "portuguese": "recrutar / atrair (clientes)", "example": "Die Firma will neue Mitarbeiter anwerben." },
+  { "german": "die Einnahme", "portuguese": "o faturamento", "example": "Die Einnahmen sind in diesem Monat gestiegen." },
+  { "german": "die Werbeanzeige", "portuguese": "o anúncio publicitário", "example": "Die Werbeanzeige war sehr kreativ." },
+  { "german": "die Freiheit", "portuguese": "a liberdade", "example": "Jeder Mensch hat das Recht auf Freiheit." },
+  { "german": "die Leidenschaft", "portuguese": "a paixão", "example": "Seine Leidenschaft ist das Kochen." },
+  { "german": "die Körperkraft", "portuguese": "a força física", "example": "Er hat viel Körperkraft." },
+  { "german": "platte Reifen", "portuguese": "pneu furado", "example": "Ich habe einen platten Reifen." },
+  { "german": "verkürzen", "portuguese": "encurtar", "example": "Wir müssen die Wartezeit verkürzen." },
+  { "german": "verbergen", "portuguese": "esconder", "example": "Sie konnte ihre Freude nicht verbergen." },
+  { "german": "auslassen", "portuguese": "omitir / saltar / deixar de fora", "example": "Du hast einen wichtigen Punkt ausgelassen." },
+  { "german": "herunterladen", "portuguese": "download", "example": "Ich möchte das Programm herunterladen." },
+  { "german": "die Umfrage", "portuguese": "o inquérito", "example": "Die Umfrage zeigt eine positive Entwicklung." },
+  { "german": "die Beschäftigung", "portuguese": "a atividade", "example": "Seine Hauptbeschäftigung ist das Schreiben." },
+  { "german": "der Mord", "portuguese": "o assassinato / homicídio -> ermorden = assassinar / a morte = a morte", "example": "Der Mord wurde schnell aufgeklärt." },
+  { "german": "der Totschlag", "portuguese": "o homicídio", "example": "Der Totschlag war ein tragischer Unfall." },
+
+  { "german": "die Sendung", "portuguese": "o envio / programa (televisão)", "example": "Die Nachrichtensendung beginnt um 20 Uhr." },
+  { "german": "die Spitze", "portuguese": "o topo (da montanha) / ponta", "example": "Wir erreichten die Spitze des Berges." },
+  { "german": "der Spitzenreiter", "portuguese": "o líder / o favorito", "example": "Der Spitzenreiter gewann das Rennen." },
+  { "german": "die Jagd", "portuguese": "a caça", "example": "Die Jagd ist in diesem Gebiet verboten." },
+  { "german": "das Verbrechen", "portuguese": "o crime", "example": "Das Verbrechen wurde schnell aufgeklärt." },
+  { "german": "der Verbrecher", "portuguese": "o criminoso", "example": "Der Verbrecher wurde gefasst." },
+  { "german": "die Reihe", "portuguese": "a fila / a série", "example": "Wir saßen in der ersten Reihe." },
+  { "german": "der Täter", "portuguese": "o criminoso / o autor do crime", "example": "Der Täter konnte entkommen." },
+  { "german": "verhaften", "portuguese": "prender", "example": "Die Polizei wird den Verdächtigen verhaften." },
+  { "german": "besiegen", "portuguese": "derrotar / vencer", "example": "Wir werden unsere Gegner besiegen." },
+  { "german": "das Böse", "portuguese": "o mal", "example": "Das Gute kämpft gegen das Böse." },
+  { "german": "gerecht", "portuguese": "justo", "example": "Er ist ein sehr gerechter Mensch." },
+  { "german": "die Strafe", "portuguese": "o castigo / punição", "example": "Die Strafe war zu hoch." },
+  { "german": "die Nachfrage", "portuguese": "a demanda / a procura", "example": "Die Nachfrage nach diesem Produkt ist sehr hoch." },
+  { "german": "der Verdächtige", "portuguese": "o suspeito", "example": "Der Verdächtige wurde befragt." },
+  { "german": "die Wendung", "portuguese": "a reviravolta", "example": "Die Geschichte nimmt eine unerwartete Wendung." },
+  { "german": "anwenden", "portuguese": "aplicar", "example": "Diese Regel muss man richtig anwenden." },
+  { "german": "abkürzen", "portuguese": "abreviar", "example": "Sie können den Weg abkürzen." },
+  { "german": "das Ladegerät", "portuguese": "o carregador", "example": "Ich brauche ein neues Ladegerät für mein Handy." },
+  { "german": "der Akku", "portuguese": "a bateria", "example": "Mein Handy-Akku ist leer." },
+  { "german": "aufladen", "portuguese": "carregar (algo)", "example": "Ich muss mein Handy aufladen." },
+  { "german": "empfangen", "portuguese": "receber", "example": "Wir haben eine E-Mail empfangen." },
+  { "german": "die Weckfunktion", "portuguese": "o despertador / o alarme", "example": "Ich nutze die Weckfunktion meines Handys." },
+  { "german": "versenden", "portuguese": "enviar", "example": "Wir müssen das Paket heute versenden." },
+  { "german": "verschicken", "portuguese": "enviar / despachar", "example": "Ich werde das Paket morgen verschicken." },
+  { "german": "Wozu", "portuguese": "para quê?", "example": "Wozu brauchst du das?" },
+  { "german": "das Ereignis", "portuguese": "o evento / o acontecimento", "example": "Das war ein unvergessliches Ereignis." },
+
+  { "german": "beschäftigt", "portuguese": "ocupado", "example": "Er ist gerade sehr beschäftigt." },
+  { "german": "unübersichtlich", "portuguese": "não é claro / confuso", "example": "Die Situation ist etwas unübersichtlich." },
+  { "german": "die Abteilung", "portuguese": "o departamento", "example": "Sie arbeitet in der Marketingabteilung." },
+  { "german": "der Haarschnitt", "portuguese": "o corte de cabelo", "example": "Ich brauche einen neuen Haarschnitt." },
+  { "german": "die Essgewohnheiten", "portuguese": "os hábitos alimentares", "example": "Sie hat gesunde Essgewohnheiten." },
+  { "german": "einfallen", "portuguese": "pensar em / ter uma ideia", "example": "Mir ist eine gute Idee eingefallen." },
+  { "german": "die Durchreise", "portuguese": "o trânsito (estação de passagem)", "example": "Wir sind nur auf der Durchreise." },
+  { "german": "die Gaststätte", "portuguese": "o restaurante", "example": "Wir haben in einer gemütlichen Gaststätte gegessen." },
+  { "german": "das Gericht", "portuguese": "a refeição / tribunal", "example": "Das Gericht hat ein Urteil gefällt." },
+  { "german": "der Feinschmecker", "portuguese": "o gourmet (restaurante gourmet)", "example": "Er ist ein echter Feinschmecker." },
+  { "german": "der Geschmack", "portuguese": "o paladar / sabor", "example": "Das Essen hat einen guten Geschmack." },
+  { "german": "gebraten", "portuguese": "frito (comida frita)", "example": "Ich esse gerne gebratenes Hähnchen." },
+  { "german": "der Betrieb", "portuguese": "a empresa / o funcionamento", "example": "Der Betrieb läuft sehr gut." },
+  { "german": "die Mensa", "portuguese": "a cantina", "example": "Wir essen oft in der Mensa zu Mittag." },
+  { "german": "locker", "portuguese": "relaxado / descontraído", "example": "Bleib ganz locker!" },
+  { "german": "das Besteck", "portuguese": "os talheres", "example": "Bitte deck den Tisch mit Besteck." },
+  { "german": "die Gabel", "portuguese": "o garfo", "example": "Ich brauche eine Gabel." },
+  { "german": "das Messer", "portuguese": "a faca", "example": "Das Messer ist sehr scharf." },
+  { "german": "der Löffel", "portuguese": "a colher", "example": "Gib mir bitte einen Löffel." },
+  { "german": "das Gewürz", "portuguese": "o condimento", "example": "Welches Gewürz benutzt du?" },
+  { "german": "entsprechen", "portuguese": "corresponder", "example": "Das Ergebnis entspricht nicht unseren Erwartungen." },
+  { "german": "das Eisen", "portuguese": "o ferro", "example": "Eisen ist ein wichtiges Metall." },
+  { "german": "die Erdbeere", "portuguese": "o morango", "example": "Ich liebe Erdbeeren im Sommer." },
+  { "german": "die Beilage", "portuguese": "o acompanhamento (comida)", "example": "Was möchtest du als Beilage?" },
+
+  { "german": "aus bestehen", "portuguese": "consistir em", "example": "Das Team besteht aus fünf Mitgliedern." },
+  { "german": "die Abhängigkeit", "portuguese": "dependência", "example": "Es gibt eine Abhängigkeit zwischen den Variablen." },
+  { "german": "der Kenner", "portuguese": "o conhecedor", "example": "Er ist ein Kenner alter Weine." },
+  { "german": "herausstellen", "portuguese": "revelar / destacar", "example": "Es stellte sich heraus, dass er Recht hatte." },
+  { "german": "die Wette", "portuguese": "a aposta", "example": "Ich habe eine Wette gewonnen." },
+  { "german": "drüben", "portuguese": "lá / do outro lado", "example": "Er wartet drüben an der Tür." },
+  { "german": "beweisen", "portuguese": "provar / demonstrar", "example": "Kannst du das beweisen?" },
+  { "german": "belegte Brote", "portuguese": "o sanduíche", "example": "Ich esse gerne belegte Brote zum Frühstück." },
+  { "german": "unterbrechen", "portuguese": "interromper", "example": "Bitte unterbrechen Sie mich nicht." },
+  { "german": "die Kuh", "portuguese": "a vaca", "example": "Die Kuh grast auf der Weide." },
+  { "german": "heilig", "portuguese": "sagrado", "example": "Das ist ein heiliger Ort." },
+  { "german": "als etwas gelten", "portuguese": "ser considerado como", "example": "Er gilt als Experte auf diesem Gebiet." },
+  { "german": "unrein", "portuguese": "impuro", "example": "Das Wasser ist unrein." },
+  { "german": "die Schlange", "portuguese": "a cobra / a fila", "example": "Die Schlange ist sehr lang." },
+  { "german": "die Schnecke", "portuguese": "o caracol", "example": "Die Schnecke kriecht langsam." },
+  { "german": "anzuwenden", "portuguese": "a ser aplicado / a utilizar", "example": "Diese Regel ist hier anzuwenden." },
+  { "german": "vertraulich", "portuguese": "confidencial", "example": "Diese Informationen sind vertraulich." },
+  { "german": "köstlich", "portuguese": "delicioso", "example": "Das Essen war köstlich." },
+  { "german": "feststellen", "portuguese": "determinar / constatar", "example": "Ich konnte feststellen, dass etwas fehlte." },
+  { "german": "der Nörgler", "portuguese": "o resmungão / o reclamante", "example": "Er ist ein ständiger Nörgler." },
+  { "german": "der Teig", "portuguese": "a massa", "example": "Der Teig muss noch gehen." },
+  { "german": "bitter", "portuguese": "amargo", "example": "Der Kaffee schmeckt bitter." },
+  { "german": "ähnlich", "portuguese": "semelhante", "example": "Die beiden Brüder sehen sich sehr ähnlich." },
+  { "german": "entsprechend", "portuguese": "de acordo com / em conformidade", "example": "Er handelte entsprechend den Anweisungen." },
+
+  { "german": "lieblich", "portuguese": "doce / macio", "example": "Das ist ein lieblicher Wein." },
+  { "german": "zubereiten", "portuguese": "preparar", "example": "Sie muss das Abendessen zubereiten." },
+  { "german": "aussuchen", "portuguese": "escolher", "example": "Such dir etwas Schönes aus!" },
+  { "german": "greifen", "portuguese": "agarrar", "example": "Greif nach meiner Hand." },
+  { "german": "schätzen", "portuguese": "apreciar", "example": "Ich schätze deine Hilfe sehr." },
+  { "german": "peinlich", "portuguese": "embaraçoso / vergonhoso", "example": "Das war eine peinliche Situation." },
+  { "german": "üblich", "portuguese": "usual", "example": "Es ist üblich, Trinkgeld zu geben." },
+  { "german": "zu heben", "portuguese": "levantar / erguer", "example": "Es ist schwer, diese Kiste zu heben." },
+  { "german": "aufrunden", "portuguese": "arredondar (para cima)", "example": "Kann ich die Rechnung bitte aufrunden?" },
+  { "german": "Stimmt so!", "portuguese": "Está bom assim!", "example": "Behalten Sie das Wechselgeld, stimmt so!" },
+  { "german": "der Fachmann", "portuguese": "o especialista", "example": "Fragen Sie einen Fachmann um Rat." },
+  { "german": "der Magen", "portuguese": "o estômago", "example": "Mein Magen knurrt." },
+  { "german": "knallig", "portuguese": "chamativo / berrante", "example": "Die Farbe ist sehr knallig." },
+  { "german": "unüblich", "portuguese": "invulgar / incomum", "example": "Das ist hier unüblich." },
+  { "german": "neugierig auf", "portuguese": "curioso", "example": "Ich bin neugierig auf das Ergebnis." },
+  { "german": "der Tagesablauf", "portuguese": "o dia a dia / a rotina diária", "example": "Mein Tagesablauf ist sehr strukturiert." },
+  { "german": "anspruchsvoll", "portuguese": "exigente", "example": "Sie hat sehr anspruchsvolle Kunden." },
+  { "german": "bedienen", "portuguese": "servir / atender (alguém)", "example": "Der Kellner bedient die Gäste." },
+  { "german": "das Vorhaben", "portuguese": "o projeto", "example": "Sein Vorhaben ist sehr ambitioniert." },
+  { "german": "mitmachen", "portuguese": "participar / juntar-se", "example": "Willst du bei unserem Spiel mitmachen?" },
+  { "german": "darstellen", "portuguese": "representar (algo / alguém)", "example": "Der Schauspieler kann viele Charaktere darstellen." },
+  { "german": "wörtlich", "portuguese": "literalmente", "example": "Nimm das nicht wörtlich." },
+  { "german": "aussehen", "portuguese": "parecer / ter aparência", "example": "Du siehst heute gut aus." },
+  { "german": "fügen", "portuguese": "adicionar / juntar", "example": "Füge die Zutaten zusammen." },
+  { "german": "das Fell", "portuguese": "a pele / o pelo (de animal)", "example": "Das Tier hat ein weiches Fell." },
+  { "german": "verstärken", "portuguese": "reforçar", "example": "Wir müssen die Sicherheit verstärken." },
+  { "german": "abschwächen", "portuguese": "enfraquecer / mitigar", "example": "Wir müssen die Auswirkungen abschwächen." },
+
+  { "german": "geheimnisvoll", "portuguese": "misterioso", "example": "Er hat ein geheimnisvolles Lächeln." },
+  { "german": "das Grab", "portuguese": "o túmulo / a sepultura", "example": "Sie besuchten das Grab ihrer Großeltern." },
+  { "german": "die Redewendung", "portuguese": "o ditado / a expressão", "example": "Diese Redewendung kenne ich nicht." },
+  { "german": "die Krankheit", "portuguese": "a doença", "example": "Er leidet unter einer schweren Krankheit." },
+  { "german": "fremd", "portuguese": "estranho / estrangeiro", "example": "Diese Stadt ist mir fremd." },
+  { "german": "die Verliebtheit", "portuguese": "a paixão / o amor", "example": "Die erste Verliebtheit ist oft sehr intensiv." },
+  { "german": "sich etwas gewöhnen", "portuguese": "habituar-se a algo / alguém", "example": "Ich muss mich an das neue System gewöhnen." },
+  { "german": "sich trennen", "portuguese": "separar-se", "example": "Sie haben sich getrennt." },
+  { "german": "die Gelegenheit", "portuguese": "a oportunidade", "example": "Nutze die Gelegenheit!" },
+  { "german": "ausgehen", "portuguese": "sair / acabar (esgotar-se)", "example": "Wollen wir heute Abend ausgehen?" },
+  { "german": "hereinkommen", "portuguese": "entrar", "example": "Bitte kommen Sie herein!" },
+  { "german": "ehrlich", "portuguese": "honesto / sincero", "example": "Sei bitte ehrlich zu mir." },
+  { "german": "zuverlässig", "portuguese": "confiável", "example": "Er ist ein sehr zuverlässiger Mitarbeiter." },
+  { "german": "arm", "portuguese": "pobre", "example": "Die Familie ist sehr arm." },
+  { "german": "verloben", "portuguese": "ficar noivo / noiva", "example": "Sie haben sich letztes Jahr verlobt." },
+  { "german": "äquivalent", "portuguese": "equivalente", "example": "Das ist ein äquivalenter Wert." },
+  { "german": "die Wahrheit", "portuguese": "a verdade", "example": "Sag mir die Wahrheit!" },
+  { "german": "das Fest", "portuguese": "a festa", "example": "Wir feiern ein großes Fest." },
+  { "german": "fest", "portuguese": "firme / fixo", "example": "Der Knoten ist fest." },
+  { "german": "der Anlass", "portuguese": "a ocasião / o motivo", "example": "Was ist der Anlass für diesen Besuch?" },
+  { "german": "erweitert", "portuguese": "alargado / expandido", "example": "Die erweiterte Suche liefert bessere Ergebnisse." },
+  { "german": "der Held", "portuguese": "o herói", "example": "Superman ist ein bekannter Held." },
+  { "german": "nämlich", "portuguese": "nomeadamente", "example": "Ich kann heute nicht kommen, ich bin nämlich krank." },
+  { "german": "anstoßen", "portuguese": "brindar / esbarrar", "example": "Lasst uns auf deinen Geburtstag anstoßen!" },
+  { "german": "schätzen", "portuguese": "apreciar / estimar", "example": "Ich schätze deine Ehrlichkeit." },
+  { "german": "sich verlassen können", "portuguese": "poder confiar / poder contar com", "example": "Ich kann mich immer auf meine Freunde verlassen." },
+  { "german": "verdeutlichen", "portuguese": "esclarecer / clarificar", "example": "Können Sie das bitte verdeutlichen?" },
+
+  { "german": "bequem", "portuguese": "confortável", "example": "Das Sofa ist sehr bequem." },
+  { "german": "der Zweifel", "portuguese": "a dúvida", "example": "Es gibt keinen Zweifel daran." },
+  { "german": "das Gewissen", "portuguese": "a consciência", "example": "Sein Gewissen plagte ihn." },
+  { "german": "Vorteile und Nachteile", "portuguese": "vantagens e desvantagens", "example": "Wir müssen die Vorteile und Nachteile abwägen." },
+  { "german": "der Lärm", "portuguese": "o barulho", "example": "Der Lärm von der Baustelle ist sehr störend." },
+  { "german": "der Verkehr", "portuguese": "o trânsito", "example": "Der Verkehr ist heute Morgen sehr dicht." },
+  { "german": "leise", "portuguese": "silencioso", "example": "Sei leise, das Baby schläft." },
+  { "german": "der Dreck", "portuguese": "a sujeira / sujidade", "example": "Mach den Dreck weg!" },
+  { "german": "der Vorort", "portuguese": "o subúrbio (da cidade)", "example": "Sie wohnen in einem Vorort von Berlin." },
+  { "german": "der Bauernhof", "portuguese": "a fazenda / a farm", "example": "Wir besuchten einen Bauernhof auf dem Land." },
+  { "german": "teilweise", "portuguese": "parcialmente", "example": "Der Bericht ist nur teilweise korrekt." },
+  { "german": "die Besichtigung", "portuguese": "a visita / o tour", "example": "Die Besichtigung der Burg dauert zwei Stunden." },
+  { "german": "ergreifen", "portuguese": "agarrar / aproveitar", "example": "Sie ergriff die Gelegenheit, um zu sprechen." },
+  { "german": "die Abkürzung", "portuguese": "o atalho / a abreviatura", "example": "Nimm diese Abkürzung, um Zeit zu sparen." },
+  { "german": "der Betreff", "portuguese": "o assunto (de e-mail)", "example": "Bitte gib den Betreff klar an." },
+  { "german": "beweisen", "portuguese": "provar (arranjar provas de algo)", "example": "Er konnte seine Unschuld beweisen." },
+  { "german": "der Schreck", "portuguese": "o susto / o medo", "example": "Der plötzliche Lärm war ein großer Schreck." },
+  { "german": "kaputtgehen", "portuguese": "partir (algo) / estragar-se", "example": "Mein Handy ist kaputtgegangen." },
+  { "german": "erwischen", "portuguese": "apanhar (algo ou alguém) / pegar / (uma gripe)", "example": "Die Polizei konnte den Dieb erwischen." },
+  { "german": "beladen", "portuguese": "carregar (LKW beladen)", "example": "Der LKW wird beladen." },
+  { "german": "der Gegenstand", "portuguese": "o objeto / o item", "example": "Dieser Gegenstand ist sehr wertvoll." },
+  { "german": "der Teppich", "portuguese": "o tapete", "example": "Der Teppich ist weich und flauschig." },
+  { "german": "die Ecke", "portuguese": "o canto (na canto da sala)", "example": "Stell den Stuhl in die Ecke." },
+  { "german": "besorgen", "portuguese": "obter", "example": "Ich muss noch Brot besorgen." },
+  { "german": "beschriften", "portuguese": "rotular / etiquetar", "example": "Bitte beschrifte alle Ordner." },
+  { "german": "der Inhalt", "portuguese": "o conteúdo", "example": "Der Inhalt des Buches ist sehr interessant." },
+  { "german": "wegwerfen", "portuguese": "deitar fora", "example": "Wirf den Müll weg!" },
+
+  { "german": "gefährlich", "portuguese": "perigoso", "example": "Das ist eine gefährliche Situation." },
+  { "german": "stürzen", "portuguese": "cair / derrubar", "example": "Er stürzte vom Fahrrad." },
+  { "german": "sich verbrennen", "portuguese": "queimar-se", "example": "Vorsicht, du könntest dich verbrennen." },
+  { "german": "sich einleben", "portuguese": "adaptar-se / acostumar-se", "example": "Sie hat sich schnell in der neuen Stadt eingelebt." },
+  { "german": "sich stoßen", "portuguese": "bater contra algo / colidir", "example": "Ich habe mich am Tisch gestoßen." },
+  { "german": "stolpern", "portuguese": "tropeçar", "example": "Er stolperte über einen Stein." },
+  { "german": "sich etwas brechen", "portuguese": "partir algo", "example": "Er hat sich das Bein gebrochen." },
+  { "german": "die Maßnahme", "portuguese": "a medida (que medidas se podem tomar)", "example": "Wir müssen Maßnahmen ergreifen." },
+  { "german": "der Pflaster", "portuguese": "o penso (para as feridas)", "example": "Ich brauche ein Pflaster für den Finger." },
+  { "german": "aufhören", "portuguese": "parar / cessar", "example": "Hör bitte auf zu reden!" },
+  { "german": "die Schere", "portuguese": "a tesoura", "example": "Wo ist die Schere?" },
+  { "german": "schief gehen", "portuguese": "correr mal (coisas correm mal)", "example": "Der Plan könnte schiefgehen." },
+  { "german": "verschütten", "portuguese": "derramar", "example": "Du hast Kaffee verschüttet." },
+  { "german": "ausrutschen", "portuguese": "escorregar", "example": "Ich bin auf dem nassen Boden ausgerutscht." },
+  { "german": "fest halten", "portuguese": "segurar", "example": "Halt den Koffer fest!" },
+  { "german": "vermeiden", "portuguese": "evitar / prevenir", "example": "Wir sollten Fehler vermeiden." },
+  { "german": "kleben", "portuguese": "colar", "example": "Ich habe das Papier zusammengeklebt." },
+  { "german": "die Bedingung", "portuguese": "a condição", "example": "Unter dieser Bedingung stimme ich zu." },
+  { "german": "die Kindheit", "portuguese": "a infância", "example": "Sie hatte eine glückliche Kindheit." },
+  { "german": "der Apparat", "portuguese": "o aparelho (telefónico)", "example": "Das ist ein alter Apparat." },
+  { "german": "anfügen", "portuguese": "juntar / anexar", "example": "Bitte fügen Sie die Dokumente an." },
+  { "german": "sofern", "portuguese": "desde que", "example": "Ich komme, sofern ich Zeit habe." },
+  { "german": "erforderlich", "portuguese": "necessário", "example": "Diese Maßnahmen sind erforderlich." },
+  { "german": "das Blatt", "portuguese": "a folha (das árvores)", "example": "Das Blatt fällt vom Baum." },
+  { "german": "aufbleiben", "portuguese": "ficar acordado / não ir dormir", "example": "Ich muss heute Nacht aufbleiben, um zu lernen." },
+  { "german": "gängig", "portuguese": "típico / comum", "example": "Das ist eine gängige Meinung." },
+  { "german": "umständlich", "portuguese": "incómodo / inconveniente", "example": "Der Prozess ist sehr umständlich." },
+
+  { "german": "sammeln", "portuguese": "coletar", "example": "Ich sammle Briefmarken." },
+  { "german": "anzünden", "portuguese": "acender (uma vela/fogueira)", "example": "Er zündete das Feuer an." },
+  { "german": "der Herd", "portuguese": "o fogão", "example": "Der Herd ist neu." },
+  { "german": "merken", "portuguese": "aperceber-se / memorizar", "example": "Merk dir diese Adresse!" },
+  { "german": "die Veränderung", "portuguese": "a alteração / a mudança", "example": "Die Veränderung war groß." },
+  { "german": "überreden", "portuguese": "persuadir / convencer", "example": "Ich konnte ihn überreden, mitzukommen." },
+  { "german": "die Auskunft", "portuguese": "a informação", "example": "Ich brauche eine Auskunft." },
+  { "german": "die Verteilung", "portuguese": "a distribuição", "example": "Die Verteilung der Güter ist wichtig." },
+  { "german": "der Fortschritt", "portuguese": "o progresso", "example": "Das ist ein großer Fortschritt." },
+  { "german": "die Pflicht", "portuguese": "o dever", "example": "Es ist meine Pflicht." },
+  { "german": "zuschreiben", "portuguese": "atribuir", "example": "Man schreibt ihm diese Erfindung zu." },
+  { "german": "Kinder versorgen", "portuguese": "cuidar de crianças", "example": "Sie muss ihre Kinder versorgen." },
+  { "german": "das Grundgesetz", "portuguese": "a constituição", "example": "Das Grundgesetz schützt unsere Rechte." },
+  { "german": "abhängig", "portuguese": "dependente", "example": "Ich bin von niemandem abhängig." },
+  { "german": "die Berechtigung", "portuguese": "o direito / a autorização", "example": "Er hat die Berechtigung dazu." },
+  { "german": "ziehen", "portuguese": "puxar", "example": "Zieh an der Tür!" },
+  { "german": "üblich", "portuguese": "comum / habitual", "example": "Das ist hier üblich." },
+  { "german": "imponieren", "portuguese": "impressionar", "example": "Seine Leistung hat mich imponiert." },
+  { "german": "berühmt", "portuguese": "famoso", "example": "Er ist ein berühmter Schauspieler." },
+  { "german": "der Tod", "portuguese": "a morte", "example": "Der Tod seiner Mutter war ein großer Verlust." },
+  { "german": "entdecken", "portuguese": "descobrir", "example": "Ich habe einen Fehler entdeckt." },
+  { "german": "die Begeisterung", "portuguese": "o entusiasmo", "example": "Ihre Begeisterung war ansteckend." },
+  { "german": "die Ausnahme", "portuguese": "a exceção", "example": "Das ist eine Ausnahme von der Regel." },
+  { "german": "wiedergutmachen", "portuguese": "fazer as pazes", "example": "Ich möchte das wiedergutmachen." },
+  { "german": "entstehen", "portuguese": "surgir", "example": "Wie ist das Problem entstanden?" },
+  { "german": "der Bauer", "portuguese": "o agricultor", "example": "Der Bauer arbeitet auf dem Feld." },
+
+  { "german": "der Dolmetscher", "portuguese": "o/a intérprete (profissão) / tradutor", "example": "Der Dolmetscher übersetzt die Rede." },
+  { "german": "der Oberbegriff", "portuguese": "o termo genérico", "example": "Säugetier ist ein Oberbegriff für viele Tiere." },
+  { "german": "denn", "portuguese": "pois / porque", "example": "Ich gehe, denn ich bin müde." },
+  { "german": "das Zeugnis", "portuguese": "o certificado", "example": "Er hat ein gutes Zeugnis bekommen." },
+  { "german": "die Bildung", "portuguese": "a educação", "example": "Bildung ist sehr wichtig." },
+  { "german": "die Voraussetzung", "portuguese": "o pré-requisito", "example": "Gute Noten sind eine Voraussetzung für das Studium." },
+  { "german": "aufmerksam", "portuguese": "atentamente", "example": "Sei aufmerksam im Unterricht!" },
+  { "german": "die Zulage", "portuguese": "o subsídio / o bónus", "example": "Er bekam eine Zulage zum Gehalt." },
+  { "german": "der Lohn", "portuguese": "o salário / o vencimento", "example": "Sein Lohn ist sehr gut." },
+  { "german": "der Schreiner", "portuguese": "o carpinteiro", "example": "Der Schreiner repariert Möbel." },
+  { "german": "die Schicht", "portuguese": "o turno (turno da noite, etc.)", "example": "Er arbeitet in der Nachtschicht." },
+  { "german": "etwas bestehen", "portuguese": "passar algo (passar um exame)", "example": "Ich hoffe, ich bestehe die Prüfung." },
+  { "german": "zufällig", "portuguese": "aleatoriamente", "example": "Ich habe ihn zufällig getroffen." },
+  { "german": "ablaufen", "portuguese": "expirar / decorrer", "example": "Das Visum ist abgelaufen." },
+  { "german": "hinterlassen", "portuguese": "deixar (Nachricht hinterlassen) -> deixar uma mensagem", "example": "Sie hat eine Nachricht hinterlassen." },
+  { "german": "unterbrechen", "portuguese": "interromper", "example": "Bitte unterbrich mich nicht." },
+  { "german": "die Höflichkeit", "portuguese": "a educação / a cortesia", "example": "Höflichkeit ist wichtig im Umgang mit Menschen." },
+  { "german": "leise", "portuguese": "silencioso", "example": "Sei leise, das Baby schläft!" },
+  { "german": "jemand etwas ausrichten", "portuguese": "passar uma mensagem a alguém", "example": "Kannst du ihm etwas von mir ausrichten?" },
+  { "german": "einstellen", "portuguese": "recrutar / definir / ajustar", "example": "Wir werden einen neuen Mitarbeiter einstellen." },
+  { "german": "zuverlässig", "portuguese": "confiável", "example": "Er ist sehr zuverlässig." },
+  { "german": "der Schichtdienst", "portuguese": "o trabalho por turnos", "example": "Ich mag den Schichtdienst nicht." },
+  { "german": "befristet", "portuguese": "temporário / a prazo", "example": "Der Vertrag ist befristet." },
+  { "german": "die Schwäche", "portuguese": "a fraqueza", "example": "Jeder Mensch hat seine Schwächen." },
+  { "german": "ehrlich", "portuguese": "honesto", "example": "Sei ehrlich zu mir." },
+  { "german": "belastbar", "portuguese": "resistente / resiliente", "example": "Er ist sehr belastbar unter Druck." },
+
+  { "german": "selbstbewusst", "portuguese": "auto-confiança", "example": "Er ist sehr selbstbewusst auf der Bühne." },
+  { "german": "zutreffen", "portuguese": "aplicar", "example": "Diese Beschreibung trifft auf ihn zu." },
+  { "german": "jedoch", "portuguese": "no entanto / porém", "example": "Ich wollte gehen, jedoch regnete es stark." },
+  { "german": "die Theke", "portuguese": "o balcão", "example": "Der Barkeeper stand hinter der Theke." },
+  { "german": "kaum", "portuguese": "dificilmente (kaum Zeit - nenhum tempo)", "example": "Ich habe kaum Zeit dafür." },
+  { "german": "unbedingt", "portuguese": "absolutamente", "example": "Das musst du unbedingt sehen." },
+  { "german": "kurzfristig", "portuguese": "a curto prazo", "example": "Das ist eine kurzfristige Lösung." },
+  { "german": "der Ersatz", "portuguese": "o substituto / o suplemento", "example": "Wir brauchen Ersatz für den kranken Mitarbeiter." },
+  { "german": "einfügen", "portuguese": "inserir", "example": "Du kannst den Text hier einfügen." },
+  { "german": "das Zelt", "portuguese": "a tenda", "example": "Wir haben unser Zelt im Garten aufgebaut." },
+  { "german": "schlammig", "portuguese": "lamacento", "example": "Der Weg war sehr schlammig." },
+  { "german": "die Veranstaltung", "portuguese": "o evento / a manifestação", "example": "Die Veranstaltung war sehr interessant." },
+  { "german": "das Ereignis", "portuguese": "o evento", "example": "Das war ein wichtiges Ereignis." },
+  { "german": "der Eintritt", "portuguese": "a entrada (para um evento)", "example": "Der Eintritt ist frei." },
+  { "german": "die Bühne", "portuguese": "o palco", "example": "Die Band betrat die Bühne." },
+  { "german": "begeistern", "portuguese": "inspirar (inspirar alguém)", "example": "Seine Rede hat das Publikum begeistert." },
+  { "german": "die Ausstellung", "portuguese": "o evento / a manifestação", "example": "Die Kunstausstellung war beeindruckend." },
+  { "german": "mehrmals", "portuguese": "várias vezes", "example": "Ich habe ihn mehrmals angerufen." },
+  { "german": "auftragen", "portuguese": "aplicar (creme) / servir (comida)", "example": "Tragen Sie die Salbe dünn auf." },
+  { "german": "schlendern", "portuguese": "passear / vaguear", "example": "Sie schlenderten gemütlich durch den Park." },
+  { "german": "beeindruckend", "portuguese": "impressionante", "example": "Das war eine beeindruckende Vorstellung." },
+  { "german": "ablehnen", "portuguese": "rejeitar / recusar", "example": "Sie hat mein Angebot abgelehnt." },
+  { "german": "auswandern", "portuguese": "emigrar", "example": "Viele Deutsche sind nach Amerika ausgewandert." },
+  { "german": "leiden", "portuguese": "sofrer", "example": "Er leidet unter Kopfschmerzen." },
+  { "german": "vorschlagen", "portuguese": "sugerir", "example": "Ich schlage vor, wir gehen ins Kino." },
+  { "german": "die Ermäßigung", "portuguese": "o desconto", "example": "Gibt es eine Ermäßigung für Studenten?" },
+  { "german": "begeistert", "portuguese": "entusiasmado / encantado", "example": "Sie war begeistert von dem Geschenk." },
+
+  { "german": "der Kürbis", "portuguese": "a abóbora", "example": "Wir haben einen großen Kürbis im Garten." },
+  { "german": "besorgen", "portuguese": "adquirir / obter", "example": "Kannst du mir bitte Brot besorgen?" },
+  { "german": "hinkriegen", "portuguese": "conseguir / desenrascar", "example": "Er hat es endlich hingekriegt." },
+  { "german": "mal sehen", "portuguese": "vamos ver...", "example": "Mal sehen, was morgen passiert." },
+  { "german": "verstecken", "portuguese": "esconder", "example": "Er versteckte sich hinter dem Baum." },
+  { "german": "der Geist", "portuguese": "o fantasma", "example": "Man sagt, in diesem Haus spukt ein Geist." }
+
+];
+
+    let currentIndex = 0;
+
+    const germanBox = document.getElementById("germanBox");
+    const translationBox = document.getElementById("translationBox");
+    const exampleBox = document.getElementById("exampleBox");
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    shuffle(words);
+
+    function showCard() {
+      const word = words[currentIndex];
+      germanBox.textContent = word.german;
+      translationBox.style.display = "none";
+      exampleBox.style.display = "none";
+      translationBox.textContent = word.portuguese;
+      exampleBox.textContent = word.example;
+    }
+
+    function nextCard() {
+      currentIndex = (currentIndex + 1) % words.length;
+      showCard();
+    }
+
+    germanBox.addEventListener("click", () => {
+      translationBox.style.display = "flex";
+      exampleBox.style.display = "flex";
+    });
+
+    showCard();
+
+    // Toggle table
+    const toggleBtn = document.getElementById("toggleTableBtn");
+    const tableContainer = document.getElementById("wordTableContainer");
+    let tableVisible = false;
+
+    function buildWordTable() {
+      const table = document.createElement("table");
+      const thead = table.createTHead();
+      const headerRow = thead.insertRow();
+      ["German", "Portuguese", "Example"].forEach(header => {
+        const th = document.createElement("th");
+        th.textContent = header;
+        headerRow.appendChild(th);
+      });
+
+      const tbody = table.createTBody();
+      words.forEach(word => {
+        const row = tbody.insertRow();
+        [word.german, word.portuguese, word.example].forEach(text => {
+          const cell = row.insertCell();
+          cell.textContent = text;
+        });
+      });
+
+      return table;
+    }
+
+    toggleBtn.addEventListener("click", () => {
+      if (!tableVisible) {
+        tableContainer.innerHTML = "";
+        tableContainer.appendChild(buildWordTable());
+        tableContainer.style.display = "block";
+        toggleBtn.textContent = "Hide All Words";
+      } else {
+        tableContainer.innerHTML = "";
+        tableContainer.style.display = "none";
+        toggleBtn.textContent = "Show All Words";
+      }
+      tableVisible = !tableVisible;
+    });
+  </script>
+</body>
+</html>
